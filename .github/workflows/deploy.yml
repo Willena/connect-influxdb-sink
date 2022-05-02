@@ -44,7 +44,7 @@ jobs:
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
         with:
-          name: "connect-retryable-${{github.ref_name}}"
+          name: "connect-influxdb-sink-${{github.ref_name}}"
           generate_release_notes: true
           files: |
             ./target/*.jar
