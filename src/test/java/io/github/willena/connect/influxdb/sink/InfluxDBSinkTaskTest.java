@@ -1,5 +1,6 @@
 package io.github.willena.connect.influxdb.sink;
 
+import io.github.willena.connect.influxdb.FakeInfluxdb;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -13,8 +14,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.apache.kafka.common.record.TimestampType.LOG_APPEND_TIME;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class InfluxDBSinkTaskTest {
 
@@ -55,6 +55,7 @@ class InfluxDBSinkTaskTest {
         return map;
     }
 
+
     @Test
     void put() {
 
@@ -67,9 +68,9 @@ class InfluxDBSinkTaskTest {
 
         InfluxDBSinkTask task = new InfluxDBSinkTask();
         task.start(config);
-        InfluxDB influxdbmock = mock(InfluxDB.class);
+        FakeInfluxdb influxdb = new FakeInfluxdb();
 
-        task.dbWriter.influxDB = influxdbmock;
+        task.dbWriter.influxDB = influxdb;
         task.put(Arrays.asList(records));
 
         BatchPoints.Builder batch = BatchPoints.database("mydb")
@@ -104,6 +105,6 @@ class InfluxDBSinkTaskTest {
                 .addField("fieldA", "fieldValue")
                 .addField("fieldB", "fieldValue2").build());
 
-        verify(influxdbmock).write(batch.build());
+        assertEquals(batch.build(), influxdb.getLastBatch());
     }
 }
