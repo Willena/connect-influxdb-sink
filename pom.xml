@@ -6,7 +6,7 @@
 
     <groupId>io.github.willena</groupId>
     <artifactId>connect-influxdb-sink</artifactId>
-    <version>1.0.2-SNAPSHOT</version>
+    <version>1.0.2</version>
 
     <name>Kafka connect influxDB sink connector</name>
     <description>Library that provides retry functionality for kafka connect sink connectors</description>
