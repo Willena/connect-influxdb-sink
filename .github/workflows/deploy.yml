@@ -27,18 +27,20 @@ jobs:
         run: mvn clean install
 
       - name: Prepare GPG sign
+        env:
+          PRIVATE_KEY_BASE64: ${{ secrets.PRIVATE_KEY_BASE64 }}
         run: |
-          echo "${{ secrets.PRIVATE_KEY_ENC }}" | base64 -d | openssl aes-256-cbc -K ${{ secrets.ENCRYPTED_KEY }} -iv ${{ secrets.ENCRYPTED_IV }} -out /tmp/private.key -d
           gpg --version
-          gpg --batch --import /tmp/private.key
-          rm /tmp/private.key
-
+          gpg --batch --import <(echo "$PRIVATE_KEY_BASE64" | base64 --decode)
       - name: Deploy version
         env:
+          MVN_SETTINGS: ${{ secrets.MVN_SETTINGS }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: mvn clean deploy -DperformRelease=true --settings settings.xml
+        run: |
+          echo "$MVN_SETTINGS" | base64 --decode > /tmp/settings.xml
+          mvn --settings /tmp/settings.xml --batch-mode --no-transfer-progress clean deploy -P release
 
       - name: Deploy Release
         uses: softprops/action-gh-release@v2
