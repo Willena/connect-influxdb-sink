@@ -67,7 +67,7 @@
             <dependency>
                 <groupId>io.github.willena</groupId>
                 <artifactId>connect-retryable</artifactId>
-                <version>1.0.3</version>
+                <version>1.0.4</version>
             </dependency>
             <dependency>
                 <groupId>org.influxdb</groupId>
@@ -246,7 +246,7 @@
 
     <profiles>
         <profile>
-            <id>sign-deploy</id>
+            <id>release</id>
             <activation>
                 <property>
                     <name>performRelease</name>
