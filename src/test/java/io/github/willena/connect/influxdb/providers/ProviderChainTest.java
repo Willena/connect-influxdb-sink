@@ -69,7 +69,7 @@ class ProviderChainTest {
     }
 
     public static class testCustomProvider1 implements Provider {
-        private Map<String, Object> values = Collections.singletonMap("v1", "value");
+        private final Map<String, Object> values = Collections.singletonMap("v1", "value");
 
         public testCustomProvider1(String prefix, Map<String, String> settings) {
             assertEquals("influxdb.database.providers.p1", prefix);
@@ -83,7 +83,7 @@ class ProviderChainTest {
     }
 
     public static class testCustomProvider2 implements Provider {
-        private Map<String, Object> values = Collections.singletonMap("v2", "value");
+        private final Map<String, Object> values = Collections.singletonMap("v2", "value");
 
         public testCustomProvider2(String prefix, Map<String, String> settings) {
             assertEquals("influxdb.database.providers.p2", prefix);

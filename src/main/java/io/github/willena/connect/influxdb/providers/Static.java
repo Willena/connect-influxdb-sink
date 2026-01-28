@@ -20,10 +20,10 @@ public class Static implements Provider {
                 .filter(s -> s.length() > key.length())
                 .collect(Collectors.toList());
 
-        if (keys.size() > 0) {
+        if (!keys.isEmpty()) {
             this.staticValue = keys.stream()
                     .collect(Collectors.toMap(s -> s.substring(key.length() + 1), settings::get));
-            //specialCase if static is used with class initialisation... Should never occurs...
+            //specialCase if static is used with class initialization... Should never occur...
             //handle case with following config
             // abc.value.provider.class=Static
             // abc.value.provider.value=staticValue

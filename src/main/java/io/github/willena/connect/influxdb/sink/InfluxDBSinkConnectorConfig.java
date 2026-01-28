@@ -26,6 +26,7 @@ public class InfluxDBSinkConnectorConfig extends AbstractConfig {
     public static final String INFLUXDB_USERNAME_CONFIG = "influxdb.username";
     public static final String INFLUXDB_PASS_CONFIG = "influxdb.password";
     public static final String INFLUXDB_DB_NAME_CONFIG = "influxdb.database";
+    public static final String INFLUXDB_RETENTION_POLICY_CONFIG = "influxdb.retention.policy";
     public static final String CONSISTENCY_LEVEL_CONF = "influxdb.consistency.level";
     public static final String LOG_LEVEL_CONF = "influxdb.log.level";
     public static final String GZIP_ENABLE_CONF = "influxdb.gzip.enable";
@@ -104,6 +105,7 @@ public class InfluxDBSinkConnectorConfig extends AbstractConfig {
     final Provider fieldsProvider;
     final Provider timestampProvider;
     final Provider measurementProvider;
+    final Provider retentionPolicyProvider;
 
     public InfluxDBSinkConnectorConfig(Map<String, String> settings) {
         super(config(), settings);
@@ -114,6 +116,7 @@ public class InfluxDBSinkConnectorConfig extends AbstractConfig {
         this.password = getPassword(INFLUXDB_PASS_CONFIG).value();
 
         this.databaseProvider = new ProviderChain(INFLUXDB_DB_NAME_CONFIG, settings);
+        this.retentionPolicyProvider = new ProviderChain(INFLUXDB_RETENTION_POLICY_CONFIG, settings);
         this.autoCreateDatabase = getBoolean(AUTO_CREATE_DB);
         this.measurementProvider = new ProviderChain(INFLUXDB_MEASUREMENT_CONFIG, settings);
         this.tagsProvider = new ProviderChain(INFLUXDB_TAGS_CONFIG, settings);

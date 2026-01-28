@@ -124,6 +124,7 @@ influxdb.database.provider.fields=field1,field2:renamedField2
 | `retry.backoff.ms`              | Backoff time duration to wait before retrying                                | Integer  | 1000         | 	                                             |
 | `max.retries`                   | The maximum number of times to retry on errors before failing the task.      | Integer  | 10           | 	                                             |
 | `influxdb.database`             | The name of the database to insert the data into.                            | Provider | 	            | See #provider section                         |
+| `influxdb.retention.policy`     | The name of the retention policy to insert the data into.                    | Provider | 	            | See #provider section                         |
 | `influxdb.measurement`          | The name of the measurement to insert the data into.                         | Provider | 	            | See #provider section                         |
 | `influxdb.fields`               | List of fields that needs to be inserted in influxdb                         | Provider | 	            | See #provider section                         |
 | `influxdb.timestamp`            | Where to get the timestamp from                                              | Provider | 	            | See #provider section                         |

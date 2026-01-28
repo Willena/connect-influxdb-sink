@@ -1,6 +1,7 @@
 package io.github.willena.connect.influxdb.sink;
 
 import io.github.willena.connect.influxdb.util.Version;
+import org.apache.kafka.common.config.Config;
 import org.apache.kafka.common.config.ConfigDef;
 import org.apache.kafka.connect.connector.Task;
 import org.apache.kafka.connect.sink.SinkConnector;
@@ -11,6 +12,13 @@ import java.util.Map;
 
 public class InfluxDBSinkConnector extends SinkConnector {
     Map<String, String> settings;
+
+    @Override
+    public Config validate(Map<String, String> connectorConfigs) {
+        Config c = super.validate(connectorConfigs);
+        new InfluxDBSinkConnectorConfig(connectorConfigs);
+        return c;
+    }
 
     public String version() {
         return Version.getVersion();
@@ -32,7 +40,6 @@ public class InfluxDBSinkConnector extends SinkConnector {
     public Class<? extends Task> taskClass() {
         return InfluxDBSinkTask.class;
     }
-
 
     public List<Map<String, String>> taskConfigs(int taskConfigs) {
         if (taskConfigs <= 0) {

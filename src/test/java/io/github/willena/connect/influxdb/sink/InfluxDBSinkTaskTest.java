@@ -1,6 +1,6 @@
 package io.github.willena.connect.influxdb.sink;
 
-import io.github.willena.connect.influxdb.FakeInfluxdb;
+import io.github.willena.connect.influxdb.FakeInfluxDBWriter;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.influxdb.InfluxDB;
 import org.influxdb.dto.BatchPoints;
@@ -25,6 +25,7 @@ class InfluxDBSinkTaskTest {
         this.config = new HashMap<>();
         config.put("influxdb.url", "http://localhost:8086");
         config.put("influxdb.database", "mydb");
+        config.put("influxdb.retention.policy", "autogen");
         config.put("influxdb.tags.provider.class", "io.github.willena.connect.influxdb.providers.Fields$Value");
         config.put("influxdb.tags.provider.fields", "tag1,tag2");
         config.put("influxdb.fields.provider.class", "io.github.willena.connect.influxdb.providers.Static");
@@ -66,14 +67,13 @@ class InfluxDBSinkTaskTest {
                 new SinkRecord("TOPIC", 0, null, "Measurement3", null, createValue("v8", "v7", "sss", false, 203.33F), 3, 3L, LOG_APPEND_TIME),
         };
 
-        InfluxDBSinkTask task = new InfluxDBSinkTask();
+        FakeInfluxDBWriter fakeWriter = new FakeInfluxDBWriter(config);
+        InfluxDBSinkTask task = new InfluxDBSinkTask(s -> fakeWriter);
         task.start(config);
-        FakeInfluxdb influxdb = new FakeInfluxdb();
-
-        task.dbWriter.influxDB = influxdb;
         task.put(Arrays.asList(records));
 
         BatchPoints.Builder batch = BatchPoints.database("mydb")
+                .retentionPolicy("autogen")
                 .consistency(InfluxDB.ConsistencyLevel.ONE);
 
 
@@ -105,6 +105,6 @@ class InfluxDBSinkTaskTest {
                 .addField("fieldA", "fieldValue")
                 .addField("fieldB", "fieldValue2").build());
 
-        assertEquals(batch.build(), influxdb.getLastBatch());
+        assertEquals(batch.build(), fakeWriter.getInflux().getLastBatch());
     }
 }

@@ -8,14 +8,26 @@ import org.apache.kafka.connect.sink.SinkTask;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.function.Function;
 
 
 public class InfluxDBSinkTask extends SinkTask {
-    protected InfluxDBWriter dbWriter;
+    private final Function<Map<String, String>, InfluxDBWriter> writerInit;
+    private InfluxDBWriter dbWriter;
+
+    public InfluxDBSinkTask() {
+        this(InfluxDBWriterImpl::new);
+    }
+
+    protected InfluxDBSinkTask(Function<Map<String, String>, InfluxDBWriter> writer) {
+        super();
+        this.writerInit = writer;
+    }
+
 
     public void start(Map<String, String> settings) {
         //InfluxDBSinkConnectorConfig config = new InfluxDBSinkConnectorConfig(settings);
-        this.dbWriter = new InfluxDBWriter(settings);
+        this.dbWriter = this.writerInit.apply(settings);
     }
 
     public void put(Collection<SinkRecord> records) {
