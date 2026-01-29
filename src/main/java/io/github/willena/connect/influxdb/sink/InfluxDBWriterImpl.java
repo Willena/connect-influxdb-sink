@@ -1,10 +1,10 @@
 package io.github.willena.connect.influxdb.sink;
 
 import com.google.common.collect.HashMultimap;
-import io.github.willena.connect.backoff.BackoffTimers;
+import io.github.resilience4j.core.IntervalFunction;
+import io.github.resilience4j.retry.Retry;
+import io.github.resilience4j.retry.RetryConfig;
 import io.github.willena.connect.influxdb.util.StructUtils;
-import io.github.willena.connect.retry.Condition;
-import io.github.willena.connect.retry.Retryable;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.connect.data.Struct;
@@ -26,24 +26,31 @@ public class InfluxDBWriterImpl implements InfluxDBWriter {
     private static final Logger LOGGER = LoggerFactory.getLogger(InfluxDBWriterImpl.class);
     private final Set<String> existingDatabases = new HashSet<>();
     private final Map<TopicPartition, OffsetAndMetadata> offsets = new HashMap<>();
-    private final Retryable retryable;
     private final InfluxDBSinkConnectorConfig config;
     private final InfluxDB influxDB;
-//    private final ObjectMapper mapper = new ObjectMapper();
+    private final Retry retry;
 
     public InfluxDBWriterImpl(Map<String, String> settings) {
         this.config = new InfluxDBSinkConnectorConfig(settings);
 
         this.influxDB = this.create(this.config);
 
-        this.retryable = Retryable.builder()
-                .withMaxRetries(config.maxRetries)
-                .withBackoffTimer(BackoffTimers.exponential(Duration.ofMillis(config.backOffTime)))
-                .when(Condition.isInstance(InfluxDBIOException.class))
+        RetryConfig retryConfig = RetryConfig.custom()
+                .maxAttempts(config.maxRetries + 1)
+                .intervalFunction(IntervalFunction.ofExponentialBackoff(config.backOffTime, 2.0))
+                .waitDuration(Duration.ofMillis(config.backOffTime))
+                .retryExceptions(InfluxDBIOException.class)
                 .build();
 
+        this.retry = Retry.of("InfluxDB", retryConfig);
+//        this.retryable = Retryable.builder()
+//                .withMaxRetries(config.maxRetries)
+//                .withBackoffTimer(BackoffTimers.exponential(Duration.ofMillis(config.backOffTime)))
+//                .when(Condition.isInstance(InfluxDBIOException.class))
+//                .build();
+
         if (config.autoCreateDatabase) {
-            this.existingDatabases.addAll(this.retryable.call("Describing databases ...", () -> this.influxDB.describeDatabases()));
+            this.existingDatabases.addAll(Retry.decorateSupplier(retry, this.influxDB::describeDatabases).get());
         }
     }
 
@@ -84,11 +91,8 @@ public class InfluxDBWriterImpl implements InfluxDBWriter {
             Set<SinkRecord> dbrpRecords = recordsByDbRp.get(dbrp);
             BatchPoints batch = getBatch(dbrp, dbrpRecords);
 
-            this.retryable.call("Writing batch of records to influxDB ...", () -> {
-                this.influxDB.write(batch);
-                return null;
-            });
-
+            // Writing batch of records to influxDB ...
+            this.retry.executeRunnable(() -> this.influxDB.write(batch));
             dbrpRecords.forEach(record -> this.offsets.put(new TopicPartition(record.topic(), record.kafkaPartition()), new OffsetAndMetadata(record.kafkaOffset() + 1L)));
         }
     }
@@ -183,10 +187,8 @@ public class InfluxDBWriterImpl implements InfluxDBWriter {
     protected void createDatabases(Set<String> databases) {
         for (String databaseName : databases) {
             if (!this.existingDatabases.contains(databaseName)) {
-                this.retryable.call("Creating database ...", () -> {
-                    this.influxDB.createDatabase(databaseName);
-                    return null;
-                });
+                // Creating db
+                this.retry.executeRunnable(() -> this.influxDB.createDatabase(databaseName));
                 this.existingDatabases.add(databaseName);
             }
         }

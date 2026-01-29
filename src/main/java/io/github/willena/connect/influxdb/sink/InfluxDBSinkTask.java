@@ -3,6 +3,7 @@ package io.github.willena.connect.influxdb.sink;
 import io.github.willena.connect.influxdb.util.Version;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.sink.SinkRecord;
 import org.apache.kafka.connect.sink.SinkTask;
 
@@ -24,17 +25,24 @@ public class InfluxDBSinkTask extends SinkTask {
         this.writerInit = writer;
     }
 
-
     public void start(Map<String, String> settings) {
         //InfluxDBSinkConnectorConfig config = new InfluxDBSinkConnectorConfig(settings);
-        this.dbWriter = this.writerInit.apply(settings);
+        try {
+            this.dbWriter = this.writerInit.apply(settings);
+        } catch (Exception e){
+            throw new ConnectException(e);
+        }
     }
 
     public void put(Collection<SinkRecord> records) {
         if (null == records || records.isEmpty()) {
             return;
         }
-        this.dbWriter.write(records);
+        try {
+            this.dbWriter.write(records);
+        } catch (Exception e){
+            throw new ConnectException(e);
+        }
     }
 
     public Map<TopicPartition, OffsetAndMetadata> preCommit(Map<TopicPartition, OffsetAndMetadata> currentOffsets) {
